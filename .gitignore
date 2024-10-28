@@ -1,2 +1,4 @@
 /venv
 test_encodings.json
+.env
+/.env

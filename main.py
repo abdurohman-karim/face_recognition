@@ -5,11 +5,17 @@ import asyncio
 from telegram import Bot
 from telegram.error import TelegramError
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Инициализация Telegram бота
-TOKEN = "7491361835:AAFcjeMHdHIAAEfC6ckrx6qKQZeXWveAvYI"
-USER_ID = 5580150613  # Замените на ваш Telegram ID
+TOKEN = os.getenv('TOKEN')  # Получение токена
+USER_ID = os.getenv('USER_ID')  # Получение ID пользователя
 bot = Bot(token=TOKEN)
+
+# Запрос имени пользователя
+name = input("Введите ваше имя: ")
 
 # Загрузка фотографии для сравнения
 imgmain = face_recognition.load_image_file('dataset/image_d.jpg')
@@ -45,7 +51,7 @@ async def send_photo_to_telegram(photo_path, message):
             print(f"Не удалось отправить фото: {e}")
 
 # Основная функция для обработки видео
-async def process_video():
+async def process_video(name):
     face_present_start_time = None  # Время начала обнаружения лица
     screenshot_taken = False  # Флаг для того, чтобы не делать скриншоты многократно
 
@@ -82,14 +88,14 @@ async def process_video():
                     # Сравнение лиц
                     results = face_recognition.compare_faces([encodeElon], encodeTest)
                     if True in results:
-                        label = "Совпадает лицо человека"
+                        label = f"{name}: Совпадает лицо человека"
                         match_found = True
                     else:
-                        label = "Не совпадает лицо человека"
+                        label = f"{name}: Не совпадает лицо человека"
 
                     # Отрисовка меток на изображении
                     cv2.rectangle(saved_screenshot, (left, top), (right, bottom), (255, 0, 255), 2)
-                    cv2.putText(saved_screenshot, label, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
+                    cv2.putText(saved_screenshot, name, (left, top - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 255), 2)
 
                 # Сохранение скриншота с метками
                 labeled_screenshot_path = os.path.join(screenshots_directory, f"labeled_face_{len(os.listdir(screenshots_directory)) + 1}.png")
@@ -119,4 +125,4 @@ async def process_video():
     cv2.destroyAllWindows()  # Закрытие всех окон OpenCV
 
 # Запуск обработки видео
-asyncio.run(process_video())
+asyncio.run(process_video(name))
