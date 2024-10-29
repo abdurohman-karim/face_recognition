@@ -6,6 +6,7 @@ from telegram import Bot
 from telegram.error import TelegramError
 from datetime import datetime
 from dotenv import load_dotenv
+import requests
 
 load_dotenv()
 
@@ -16,6 +17,8 @@ bot = Bot(token=TOKEN)
 
 # Запрос имени пользователя
 name = input("Введите ваше имя: ")
+amount = input("Введите сумму: ")
+description = input("Введите описание: ")
 
 # Загрузка фотографии для сравнения
 imgmain = face_recognition.load_image_file('dataset/image_d.jpg')
@@ -49,6 +52,36 @@ async def send_photo_to_telegram(photo_path, message):
             print(f"Отправлено сообщение и скриншот в Telegram пользователю {USER_ID}")
         except TelegramError as e:
             print(f"Не удалось отправить фото: {e}")
+
+async def send_data_to_backend(labeled_screenshot_path, label):
+    # Отправка данных на сервер
+
+    body = {
+        'name': name,
+        'image_path': labeled_screenshot_path,
+        'label': label,
+        'amount': amount or 0,
+        'description': description
+    }
+
+    token = os.getenv('BACKEND_TOKEN')
+    try:
+        response = requests.post(os.getenv('BACKEND_URL') + '/api/transactions/face', json=body, headers={'Authorization': f'Bearer {token}'})
+
+        # write response to log
+        if response.status_code == 200:
+            with open('log.txt', 'a') as f:
+                f.write(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} {response}\n')
+            print("Данные успешно отправлены на сервер")
+        else:
+            with open('log.txt', 'a') as f:
+                f.write(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} {response}\n')
+            print("Произошла ошибка при отправке данных на сервер")
+    except requests.exceptions.RequestException as e:
+        with open('log.txt', 'a') as f:
+            f.write(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} {e}\n')
+        print(f"Произошла ошибка при отправке данных на сервер: {e}")
+
 
 # Основная функция для обработки видео
 async def process_video(name):
@@ -104,6 +137,9 @@ async def process_video(name):
 
                 # Отправка изображения и сообщения в Telegram
                 await send_photo_to_telegram(labeled_screenshot_path, label)
+
+                # Отправка данных на сервер
+                await send_data_to_backend(labeled_screenshot_path, label)
 
                 screenshot_taken = True
 
