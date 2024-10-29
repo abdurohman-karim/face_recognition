@@ -73,6 +73,10 @@ async def send_data_to_backend(labeled_screenshot_path, label):
             with open('log.txt', 'a') as f:
                 f.write(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} {response}\n')
             print("Данные успешно отправлены на сервер")
+        elif response.status_code == 401:
+            with open('log.txt', 'a') as f:
+                f.write(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} {response}\n')
+            print("Неверный токен")
         else:
             with open('log.txt', 'a') as f:
                 f.write(f'{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} {response}\n')
